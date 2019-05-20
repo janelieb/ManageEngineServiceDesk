@@ -1,4 +1,4 @@
-SELECT 
+with all_Open as (SELECT 
 		wo.WORKORDERID "RequestID"
 		,wo.WORKORDERID as "ParentID"
 		,AaaUser.FIRST_NAME as "Technician"
@@ -24,3 +24,131 @@ SELECT
 		(rtdef.NAME = N'Incident' COLLATE SQL_Latin1_General_CP1_CI_AS) 
 		AND 
 		StatusDefinition.STATUSNAME not in ('Closed','Resolved')
+union all
+--work orders / requests. Get all due this week or medium/high priority
+SELECT 
+		wo.WORKORDERID "Request ID"
+		,wo.WORKORDERID as "Parent ID"
+		,AaaUser.FIRST_NAME as "Technician"
+		,rtdef.Name as "RequestDefinition"
+		,wo.TITLE "Subject"
+		,StatusDefinition.STATUSNAME
+		,dateadd(s,datediff(s,GETUTCDATE() ,getdate()) + (wo.CREATEDTIME/1000),'1970-01-01 00:00:00') as "Created_Time"
+		, dateadd(s,datediff(s,GETUTCDATE() ,getdate()) + (wo.DUEBYTIME/1000),'1970-01-01 00:00:00')  as "Due"
+		,UrgencyDefinition.[NAME] as "Urgency"
+		,PriorityDefinition.PRIORITYNAME as "Priority"
+		,'2' as "SortPriority"
+	FROM WorkOrder wo 
+		LEFT JOIN WorkOrderStates wos ON wo.WORKORDERID=wos.WORKORDERID 
+		LEFT JOIN PriorityDefinition on wos.PRIORITYID = PriorityDefinition.PRIORITYID
+		LEFT JOIN UrgencyDefinition on wos.URGENCYID = UrgencyDefinition.URGENCYID
+		LEFT JOIN RequestTypeDefinition rtdef ON wos.REQUESTTYPEID=rtdef.REQUESTTYPEID 
+		LEFT JOIN StatusDefinition ON wos.STATUSID=StatusDefinition.STATUSID
+		LEFT JOIN SDUser ON wos.OWNERID=SDUser.USERID
+		LEFT JOIN AaaUser ON SDUser.USERID=AaaUser.USER_ID 
+	WHERE 
+
+		StatusDefinition.STATUSNAME not in ('Closed','Resolved')
+		and
+		(rtdef.NAME <> N'Incident' COLLATE SQL_Latin1_General_CP1_CI_AS) 
+		or (StatusDefinition.STATUSNAME not in ('Closed','Resolved') and (rtdef.NAME <> N'Incident' COLLATE SQL_Latin1_General_CP1_CI_AS)  and PriorityDefinition.PRIORITYNAME in ('Medium','High'))
+union all
+--tasks
+SELECT [TASKID]
+	  ,[TASKID] as "Parent ID"
+      ,AaaUser.FIRST_NAME
+	  ,'Task' as RequestType
+      ,[TaskDetails].[TITLE]
+	  ,StatusDefinition.STATUSNAME
+	  ,dateadd(s,datediff(s,GETUTCDATE() ,getdate()) + ([TaskDetails].[CREATEDDATE]/1000),'1970-01-01 00:00:00')  as "CreatedTime"
+	  ,dateadd(s,datediff(s,GETUTCDATE() ,getdate()) + ([TaskDetails].[SCHEDULEDENDTIME]/1000),'1970-01-01 00:00:00')  as "Due"
+	 ,PriorityDefinition.PRIORITYNAME as "Urgency" -- no urgency id in task details. not sure where to look for it if it exists
+	  ,PriorityDefinition.PRIORITYNAME as "Priority"
+	  , '3' as "SortPriority"  
+  FROM		[ServiceDesk].[dbo].[TaskDetails]
+  LEFT JOIN AaaUser ON OWNERID=AaaUser.USER_ID 
+  left join StatusDefinition on StatusDefinition.STATUSID=TaskDetails.STATUSID
+  LEFT JOIN PriorityDefinition on [ServiceDesk].[dbo].[TaskDetails].PRIORITYID = PriorityDefinition.PRIORITYID
+  where 
+
+	  StatusDefinition.STATUSNAME not in('Closed','Resolved')
+	or (StatusDefinition.STATUSNAME not in ('Closed','Resolved') and  PriorityDefinition.PRIORITYNAME in ('Medium','High'))
+  union all
+  --problems
+  SELECT [PROBLEMID]
+  , [PROBLEMID] as "Parent ID"
+      ,AaaUser.FIRST_NAME
+	  ,'Problem' as "RequestType"
+      ,[TITLE]
+	  ,StatusDefinition.STATUSNAME
+      ,dateadd(s,datediff(s,GETUTCDATE() ,getdate()) + ([Problem].[REPORTEDTIME]/1000),'1970-01-01 00:00:00')  as "CreatedTime"
+	  ,dateadd(s,datediff(s,GETUTCDATE() ,getdate()) + ([Problem].[DUEBYTIME]/1000),'1970-01-01 00:00:00')  as "Due"
+	  ,UrgencyDefinition.[NAME] as "Urgency"
+      ,PriorityDefinition.PRIORITYNAME as "Priority"
+	  , '4' as "SortPriority"  
+  FROM [ServiceDesk].[dbo].[Problem]
+	 LEFT JOIN AaaUser ON OWNERID=AaaUser.USER_ID 
+	 left join StatusDefinition on StatusDefinition.STATUSID=Problem.STATUSID
+	  LEFT JOIN PriorityDefinition on [ServiceDesk].[dbo].[Problem].PRIORITYID = PriorityDefinition.PRIORITYID
+	   LEFT JOIN UrgencyDefinition on [ServiceDesk].[dbo].[Problem].URGENCYID = UrgencyDefinition.URGENCYID
+ where
+
+	StatusDefinition.STATUSNAME not in('Closed','Resolved')
+	or (StatusDefinition.STATUSNAME not in ('Closed','Resolved') and  PriorityDefinition.PRIORITYNAME in ('Medium','High'))
+  union all
+  -- changes
+  SELECT  [CHANGEID]
+  , [CHANGEID] as "Parent ID"
+      ,AaaUser.FIRST_NAME
+	  ,'Change' as "RequestType"
+      ,StatusDefinition.STATUSNAME
+      ,[TITLE]
+	  ,dateadd(s,datediff(s,GETUTCDATE() ,getdate()) + ([ChangeDetails].[CREATEDTIME]/1000),'1970-01-01 00:00:00')  as "CreatedTime"
+	  ,dateadd(s,datediff(s,GETUTCDATE() ,getdate()) + ([ChangeDetails].[SCHEDULEDENDTIME]/1000),'1970-01-01 00:00:00')  as "Due"
+	  ,UrgencyDefinition.[NAME] as "Urgency"
+      ,PriorityDefinition.PRIORITYNAME as "Priority"
+	  , '5' as "SortPriority"  
+      
+  FROM [ServiceDesk].[dbo].[ChangeDetails]
+	 LEFT JOIN AaaUser ON TECHNICIANID=AaaUser.USER_ID 
+	 left join StatusDefinition on StatusDefinition.STATUSID=ChangeDetails.WFSTAGEID
+ LEFT JOIN PriorityDefinition on [ServiceDesk].[dbo].[ChangeDetails].PRIORITYID = PriorityDefinition.PRIORITYID
+ LEFT JOIN UrgencyDefinition on [ServiceDesk].[dbo].[ChangeDetails].URGENCYID = UrgencyDefinition.URGENCYID
+ where
+
+	  StatusDefinition.STATUSNAME not in('Closed','Resolved')
+	  or (StatusDefinition.STATUSNAME not in ('Closed','Resolved') and  PriorityDefinition.PRIORITYNAME in ('Medium','High'))
+	  )
+select 
+		
+		[RequestID]
+		,
+		case when ISNULL(ProjectDetails.PROJECTID, isnull(WorkOrder.WORKORDERID,999)) = 999 then 'None'
+		else convert(varchar(max), ISNULL(ProjectDetails.PROJECTID, isnull(WorkOrder.WORKORDERID,999)))
+		end as "ParentID"
+		,Technician
+		,RequestType
+		,ProjectDetails.TITLE as "Project"
+		,WorkOrder.TITLE as "Ticket"
+		,[Subject]
+		,STATUSNAME
+		,Created_Time
+		,Due
+		,Urgency
+		,[Priority]
+		,SortPriority
+		
+from all_Open
+left join TaskToProjects on all_Open.[RequestID]=TaskToProjects.TASKID and all_Open.RequestType = 'Task'
+left join ProjectDetails on TaskToProjects.PROJECTID = ProjectDetails.ProjectID
+left join WorkOrderToTaskDetails on WorkOrderToTaskDetails.TASKID = all_Open.[RequestID] and all_Open.RequestType = 'Task'
+left join WorkOrder on WorkOrderToTaskDetails.WORKORDERID = WorkOrder.WORKORDERID
+
+
+where
+Technician = 'Jane Lieberman'
+	order by
+		[SortPriority]
+		--,[Priority] asc
+		,Created_Time
+	
