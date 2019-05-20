@@ -11,13 +11,13 @@ conn_str = (
     )
 cnxn = pyodbc.connect(conn_str)
 cursor = cnxn.cursor()
-cursor.execute("Select * from AaaUser where FIRST_NAME like 'Jane%'")
+cursor.execute(Query.txt)
 
 while 1:
     row = cursor.fetchone()
     if not row:
         break
-    print(row.FIRST_NAME)#calls something from the select statement record
+    print(row.Technician)#calls something from the select statement record
 cnxn.close()
 
 #this will be a background retrieval to print to somewhere else with

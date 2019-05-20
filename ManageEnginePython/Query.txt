@@ -123,6 +123,10 @@ SELECT [TASKID]
 select 
 		
 		[Request ID]
+		,
+		case when ISNULL(ProjectDetails.PROJECTID, isnull(WorkOrder.WORKORDERID,999)) = 999 then 'None'
+		else convert(varchar(max), ISNULL(ProjectDetails.PROJECTID, isnull(WorkOrder.WORKORDERID,999)))
+		end as "Parent ID"
 		,Technician
 		,RequestType
 		,ProjectDetails.TITLE as "Project"
