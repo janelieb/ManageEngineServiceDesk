@@ -54,8 +54,8 @@ DataByTech.loc[DataByTech.RequestType=='Project','Link_2']=""
 DataByTech['Link'] = DataByTech['Link_1']+DataByTech['RequestID'].map(str)+DataByTech['Link_2']
 DataByTech['ParentLink'] = DataByTech['ParentLink_1']+DataByTech['ParentID'].map(str)+DataByTech['ParentLink_2']
 #need to put together hyperlinks from this data
-print(DataByTech.filter(items=['RequestType','RequestID','ParentType','ParentID','Technician','Link','ParentLink']))
-
+DataToShow = DataByTech.filter(items=['RequestType','RequestID','ParentType','ParentID','Technician','Link','ParentLink','Subject','STATUSNAME','Urgency','Priority'])
+print(DataToShow)
 #close files
 QueryFile.close()
 cnxn.close()
