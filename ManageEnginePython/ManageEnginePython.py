@@ -11,13 +11,15 @@ conn_str = (
     )
 cnxn = pyodbc.connect(conn_str)
 cursor = cnxn.cursor()
-cursor.execute(Query.txt)
+QueryFile = open("Query.txt", encoding='utf-8')
+Query = QueryFile.read()
+cursor.execute(Query)
 
 while 1:
     row = cursor.fetchone()
     if not row:
         break
-    print(row.Technician)#calls something from the select statement record
+    print(row.RequestID)#calls something from the select statement record
 cnxn.close()
 
 #this will be a background retrieval to print to somewhere else with
