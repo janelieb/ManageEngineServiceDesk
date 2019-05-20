@@ -2,6 +2,8 @@
 
 # need this to connect to SQL Server
 import pyodbc
+import pandas
+
 
 conn_str = (
     r'Driver={SQL Server};'
@@ -9,17 +11,25 @@ conn_str = (
     r'Database=ServiceDesk;'
     r'Trusted_Connection=yes;'
     )
+
 cnxn = pyodbc.connect(conn_str)
-cursor = cnxn.cursor()
+#cursor = cnxn.cursor()
+
+#query currently grabs all open jobs for all techs, and we can filter and sort after adding to dataframes
 QueryFile = open("Query.txt", encoding='utf-8')
 Query = QueryFile.read()
-cursor.execute(Query)
 
-while 1:
-    row = cursor.fetchone()
-    if not row:
-        break
-    print(row.RequestID)#calls something from the select statement record
+data = pandas.read_sql(Query,cnxn)
+#cursor.execute(Query)
+
+#while 1:
+#    row = cursor.fetchone()
+#    if not row:
+#        break
+#    print(row.RequestID , '\t' , row.Technician)#calls something from the select statement record
+
+print(data[['RequestID','Technician']])
+
 cnxn.close()
 
 #this will be a background retrieval to print to somewhere else with

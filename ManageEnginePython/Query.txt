@@ -144,11 +144,4 @@ left join ProjectDetails on TaskToProjects.PROJECTID = ProjectDetails.ProjectID
 left join WorkOrderToTaskDetails on WorkOrderToTaskDetails.TASKID = all_Open.[RequestID] and all_Open.RequestType = 'Task'
 left join WorkOrder on WorkOrderToTaskDetails.WORKORDERID = WorkOrder.WORKORDERID
 
-
-where
-Technician = 'Jane Lieberman'
-	order by
-		[SortPriority]
-		--,[Priority] asc
-		,Created_Time
 	
