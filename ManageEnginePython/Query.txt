@@ -126,6 +126,10 @@ select
 		case when ISNULL(ProjectDetails.PROJECTID, isnull(WorkOrder.WORKORDERID,999)) = 999 then 'None'
 		else convert(varchar(max), ISNULL(ProjectDetails.PROJECTID, isnull(WorkOrder.WORKORDERID,999)))
 		end as "ParentID"
+		,case when ProjectDetails.PROJECTID is null and WorkOrder.WORKORDERID is null then 'None'
+		 when ProjectDetails.PROJECTID is not null and WorkOrder.WORKORDERID is null then 'Project'
+		 else 'WorkOrder'
+		 end as ParentType
 		,Technician
 		,RequestType
 		,ProjectDetails.TITLE as "Project"
