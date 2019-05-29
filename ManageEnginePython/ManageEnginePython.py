@@ -3,6 +3,9 @@
 # need this to connect to SQL Server
 import pyodbc
 import pandas
+
+#from kivy.app import App
+#from kivy.uix.label import Label
 #need to import a gui library (kivas?)
 #need to import a code freeze library (pyinstaller)
 

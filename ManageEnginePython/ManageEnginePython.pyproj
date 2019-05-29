@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>ba1d3e0f-ed0b-4bce-a52b-f3d266b56850</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>ManageEnginePython.py</StartupFile>
+    <StartupFile>KivyTesting.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -22,6 +22,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ManageEnginePython.py" />
+    <Compile Include="KivyTesting.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Query.txt" />
