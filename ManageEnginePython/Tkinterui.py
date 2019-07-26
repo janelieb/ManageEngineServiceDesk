@@ -8,6 +8,7 @@ Python 3 Tkinter GUI
 import datetime
 import gettext
 import sys
+import pygubu
 import time
 import tkinter
 import webbrowser #  needed this for url web opener
@@ -47,7 +48,6 @@ class PopupDialog(ttk.Frame):
 
     def ok_button(self):
         "OK button feedback."
-
         self.top.destroy()
 
 
@@ -64,6 +64,7 @@ class NavigationBar(ttk.Frame):
 
         self.listbox = tkinter.Listbox(self, bg='white')
         self.listbox.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand=1)
+        #JL change navigation bar here
         for i in range(1, 100):
             self.listbox.insert(tkinter.END, _('Navigation ') + str(i))
         self.listbox.config(yscrollcommand=self.scrollbar.set)
@@ -74,7 +75,7 @@ class NavigationBar(ttk.Frame):
     def onselect(self, event):
         """Sample function provided to show how navigation commands may be \
         received."""
-
+        #JL change what happens on nav selection (case)
         widget = event.widget
         _index = int(widget.curselection()[0])
         _value = widget.get(_index)
@@ -86,7 +87,7 @@ class NavigationBar(ttk.Frame):
 class StatusBar(ttk.Frame):
     "Sample status bar provided by cookiecutter switch."
     _status_bars = 4
-
+    #JL change what status bar at bottom does
     def __init__(self, parent):
         ttk.Frame.__init__(self, parent)
         self.labels = []
@@ -111,6 +112,8 @@ class ToolBar(ttk.Frame):
         ttk.Frame.__init__(self, parent)
         self.buttons = []
         self.config(border=1, relief=tkinter.GROOVE)
+        #JL change number of tool bar items and their purpose here
+
         for i in range(1, 5):
             _button_text = _('Tool ') + str(i)
             self.buttons.append(ttk.Button(self, text=_button_text,
@@ -160,8 +163,8 @@ class MenuBar(tkinter.Menu):
         tkinter.Menu.__init__(self, parent)
 
         filemenu = tkinter.Menu(self, tearoff=False)
-        filemenu.add_command(label=_('New'), command=self.new_dialog)
-        filemenu.add_command(label=_('Open'), command=self.open_dialog)
+        #filemenu.add_command(label=_('New'), command=self.new_dialog)
+        #filemenu.add_command(label=_('Open'), command=self.open_dialog)
         filemenu.add_separator()
         filemenu.add_command(label=_('Exit'), underline=1,
                              command=self.quit)
@@ -217,7 +220,7 @@ class MenuBar(tkinter.Menu):
 
 class Application(tkinter.Tk):
     "Create top-level Tkinter widget containing all other widgets."
-
+    #JL redefine widgets here
     def __init__(self):
         tkinter.Tk.__init__(self)
         menubar = MenuBar(self)
@@ -239,8 +242,8 @@ class Application(tkinter.Tk):
 
 
 # Navigation selection == 'y'
-        self.navigationbar = NavigationBar(self)
-        self.navigationbar.pack(side='left', fill='y')
+#        self.navigationbar = NavigationBar(self)
+#        self.navigationbar.pack(side='left', fill='y')
 
 
 # Tool bar selection == 'y'

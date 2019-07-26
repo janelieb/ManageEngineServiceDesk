@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>ba1d3e0f-ed0b-4bce-a52b-f3d266b56850</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Tkinterui.py</StartupFile>
+    <StartupFile>ManageEnginePython.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
