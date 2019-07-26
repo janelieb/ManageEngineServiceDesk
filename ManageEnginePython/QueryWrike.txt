@@ -1,0 +1,71 @@
+DECLARE @start DATE = CONVERT(DATE,GETDATE()-1)
+DECLARE @end DATE = GETDATE()
+SELECT 
+         --SUM( ct.TIMESPENT) AS TimeSpent,
+		CONVERT(DATE,DATEADD(s,datediff(s,GETUTCDATE() ,getdate()) + (ct.TS_STARTTIME/1000),'1970-01-01 00:00:00')) as "Worked_On_Date",
+		cONVERT(DATE,DATEADD(s,datediff(s,GETUTCDATE() ,getdate()) + (ISNULL(wo.CREATEDTIME, td.CREATEDDATE)/1000),'1970-01-01 00:00:00')) AS "Created",
+         --DATEDIFF(HOUR,convert(smalldatetime,'1900-01-01'),convert(VARCHAR(MAX),dateadd(ms,sum(ct.TIMESPENT),0),9)) as "TimeHours",
+		DATEDIFF(MINUTE,convert(smalldatetime,'1900-01-01'),convert(VARCHAR(MAX),dateadd(ms,sum(ct.TIMESPENT),0),9)) as "TimeMins",
+		--hours need to add leading zero
+		CASE WHEN DATEDIFF(HOUR,convert(smalldatetime,'1900-01-01'),convert(VARCHAR(MAX),dateadd(ms,sum(ct.TIMESPENT),0),9)) >=10 then CONVERT(VARCHAR(2),DATEDIFF(HOUR,convert(smalldatetime,'1900-01-01'),convert(VARCHAR(MAX),dateadd(ms,sum(ct.TIMESPENT),0),9)))
+		ELSE '0'+ CONVERT(VARCHAR(1),DATEDIFF(HOUR,convert(smalldatetime,'1900-01-01'),convert(VARCHAR(MAX),dateadd(ms,sum(ct.TIMESPENT),0),9)) )END
+		 +':'+
+		--take 60* hrs from mins total (hrs can be zero)
+		CASE WHEN DATEDIFF(MINUTE,convert(smalldatetime,'1900-01-01'),convert(VARCHAR(MAX),dateadd(ms,sum(ct.TIMESPENT),0),9)) - 60*DATEDIFF(HOUR,convert(smalldatetime,'1900-01-01'),convert(VARCHAR(MAX),dateadd(ms,sum(ct.TIMESPENT),0),9)) >= 10 THEN
+		CONVERT(VARCHAR(2),DATEDIFF(MINUTE,convert(smalldatetime,'1900-01-01'),convert(VARCHAR(MAX),dateadd(ms,sum(ct.TIMESPENT),0),9)) - DATEDIFF(HOUR,convert(smalldatetime,'1900-01-01'),convert(VARCHAR(MAX),dateadd(ms,sum(ct.TIMESPENT),0),9))*60) 
+		ELSE
+        -- add a leading 0 to mins if < 10 
+		'0'+ CONVERT(VARCHAR(1),DATEDIFF(MINUTE,convert(smalldatetime,'1900-01-01'),convert(VARCHAR(MAX),dateadd(ms,sum(ct.TIMESPENT),0),9))- 60*DATEDIFF(HOUR,convert(smalldatetime,'1900-01-01'),convert(VARCHAR(MAX),dateadd(ms,sum(ct.TIMESPENT),0),9))) end
+		 				AS TimeSpent_Formatted,
+		 ISNULL(ttp.PROJECTID,ISNULL(wottd.WORKORDERID,ISNULL(wo.WORKORDERID,ttc.TASKID))) AS "ParentID",
+		 ISNULL(wo.WORKORDERID,ttc.TASKID) AS ItemID,
+		 CASE WHEN wo.WORKORDERID IS NULL THEN 
+			'Task-'+ CASE WHEN ttp.PROJECTID IS NULL THEN 'WorkOrder' ELSE 'Project' END
+			 ELSE 'WorkOrder' END AS "Type",
+		  --ISNULL(wo.CREATEDTIME, td.CREATEDDATE) AS Created,
+          ISNULL( wo.TITLE , td.TITLE) AS Title,
+          --wo.DESCRIPTION,
+          rctd.FIRST_NAME,
+		  ISNULL(tstatus.STATUSNAME,wostatus.STATUSNAME) AS "Status"
+		,tc.comment
+		,dbo.udf_GetValidCharacters(tc.Comment,'0-9') as WrikeID
+	
+FROM 
+	dbo.ChargesTable ct
+	LEFT JOIN dbo.WorkOrderToCharge wtoc ON ct.CHARGEID=wtoc.CHARGEID
+	LEFT JOIN dbo.WorkOrder wo ON wo.WORKORDERID = wtoc.WORKORDERID
+	LEFT JOIN dbo.SDUser rcti ON ct.TECHNICIANID=rcti.USERID
+	LEFT JOIN dbo.AaaUser rctd ON rcti.USERID=rctd.USER_ID 
+	LEFT JOIN dbo.TaskToCharge ttc ON ttc.CHARGEID = ct.CHARGEID
+	LEFT JOIN dbo.TaskDetails td ON td.TASKID = ttc.TASKID
+	LEFT JOIN dbo.WorkOrderStates wos ON wos.WORKORDERID = wo.WORKORDERID
+	LEFT JOIN dbo.RequestTypeDefinition rtdef ON rtdef.REQUESTTYPEID = wos.REQUESTTYPEID
+	LEFT JOIN dbo.StatusDefinition wostatus ON wostatus.STATUSID = wos.STATUSID
+	LEFT JOIN dbo.StatusDefinition tstatus ON tstatus.STATUSID = td.STATUSID
+	LEFT JOIN dbo.TaskToProjects ttp ON ttp.TASKID = td.TASKID
+	LEFT JOIN dbo.WorkOrderToTaskDetails wottd ON wottd.TASKID = td.TASKID
+	left join dbo.[TaskComments] tc on tc.Taskid = td.taskid
+--WHERE
+	--rctd.FIRST_NAME LIKE @Technician
+
+GROUP BY  ct.TECHNICIANID,
+		  CONVERT(DATE,DATEADD(s,datediff(s,GETUTCDATE() ,getdate()) + (ct.TS_STARTTIME/1000),'1970-01-01 00:00:00')) ,
+		  ISNULL(wo.WORKORDERID,ttc.TASKID) ,
+          ISNULL(wo.CREATEDTIME, td.CREATEDDATE),
+          ISNULL( wo.TITLE , td.TITLE) ,
+		  ISNULL(tstatus.STATUSNAME,wostatus.STATUSNAME),
+		  ISNULL(ttp.PROJECTID,ISNULL(wottd.WORKORDERID,ISNULL(wo.WORKORDERID,ttc.TASKID))) ,
+          wo.DESCRIPTION,
+          rctd.FIRST_NAME,
+		  wo.WORKORDERID,
+		   CASE WHEN wo.WORKORDERID IS NULL THEN 
+			'Task-'+ CASE WHEN ttp.PROJECTID IS NULL THEN 'WorkOrder' ELSE 'Project' END
+			 ELSE 'WorkOrder' END 
+		,tc.comment
+		,dbo.udf_GetValidCharacters(tc.Comment,'0-9')
+	
+HAVING 
+--filter to worked on dates as recent as last week
+(CONVERT(DATE,DATEADD(s,datediff(s,GETUTCDATE() ,getdate()) + (ct.TS_STARTTIME/1000),'1970-01-01 00:00:00')) BETWEEN @start AND @end)
+and
+tc.comment like '%wrike%id%'
