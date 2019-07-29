@@ -59,7 +59,7 @@ for index, row in DataToShow.iterrows():
     time_hrs_str = round(float(row['TimeMins']/60),2)
     time_hrs_str = str(time_hrs_str)
     dateYesterday = str(row['Worked_On_Date'])
-    time_log_comment = 'Task' + str(row['ItemID'])
+    time_log_comment = 'ManageEngineTask' + str(row['ItemID'])
     #put together post command url
     url_str = 'https://www.wrike.com/api/v4/tasks/'+task_str+'/timelogs?hours='+ time_hrs_str + '&trackedDate=' + dateYesterday + '&comment='+ time_log_comment 
     r = requests.post(url = url_str, headers = {'Authorization':'Bearer '+token}) 
@@ -72,4 +72,4 @@ print(DataToShow)
 QueryFile.close()
 cnxn.close()
 
-
+input()

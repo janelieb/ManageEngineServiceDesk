@@ -65,7 +65,7 @@ GROUP BY  ct.TECHNICIANID,
 		,dbo.udf_GetValidCharacters(tc.Comment,'0-9')
 	
 HAVING 
---filter to worked on dates as recent as last week
-(CONVERT(DATE,DATEADD(s,datediff(s,GETUTCDATE() ,getdate()) + (ct.TS_STARTTIME/1000),'1970-01-01 00:00:00')) BETWEEN @start AND @end)
+--filter to worked on dates = previous day
+(CONVERT(DATE,DATEADD(s,datediff(s,GETUTCDATE() ,getdate()) + (ct.TS_STARTTIME/1000),'1970-01-01 00:00:00')) = @start)
 and
 tc.comment like '%wrike%id%'
